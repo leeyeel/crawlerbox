@@ -1,6 +1,7 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const moment = require('moment-timezone');
+const fs = require('fs');
 
 const ESPN_URL = 'https://www.espn.com/nba/team/schedule/_/name/lal';
 
@@ -50,7 +51,6 @@ async function getLakersGameData() {
         if (!gameInfo && lastCompletedGame) gameInfo = lastCompletedGame;
         if (!gameInfo || !gameInfo.date) return;
 
-        //console.log('Game Data:', gameInfo);
         const gameid = gameInfo.gameLink.split('/')[7];
         if (gameInfo.gameLink) await getDetailedBoxScore(gameid);
     } catch (error) {
@@ -72,6 +72,7 @@ async function  getDetailedBoxScore(gameId) {
             return;
         }
 
+        // 2.获取比赛基本信息
         let homeTeam = null;
         let awayTeam = null;
         const teams = jsonData.boxscore.teams
@@ -85,37 +86,48 @@ async function  getDetailedBoxScore(gameId) {
 
         let homescore = null;
         let awayscore = null;
+        let scoreMap = {}; // 存储 teamId -> score 映射关系
         const competitors = jsonData.header.competitions[0].competitors
-        competitors.forEach(com => {
-            if(com.homeAway === "home"){
-                homescore = com.score;
-            }else if(com.homeAway === "away"){
-                awayscore = com.score;
+        competitors.forEach(team=> {
+            const teamId = team.team.id;
+            scoreMap[teamId] = team.score; // 存储 teamId -> score
+            if (team.homeAway === "home") {
+                homescore = team.score;
+            } else {
+                awayscore = team.score;
             }
         });
 
-        console.log("\n=======🏀 比赛信息 🏀=======");
-        console.log("主队:", homeTeam.team.displayName, `(${homescore}),客队:`, awayTeam.team.displayName);
-        console.log("比分:", homescore, "VS ", awayscore);
+        console.log(`### 🏀 比赛信息`);
+        console.log(`**比赛 ID:** ${gameId}`);
+        console.log(`**主队:** ${homeTeam.team.displayName}  **得分:** ${homescore}`);
+        console.log(`**客队:** ${awayTeam.team.displayName}  **得分:** ${awayscore}`);
 
-        const playersData = [];
-        // 解析球队统计数据
-        const teamsData = jsonData.boxscore.teams.map(team => {
-            const stats = {};
-            stats["team"] = team.team.displayName; // 球队名称
-            team.statistics.forEach(stat => {
-                stats[stat.label] = stat.displayValue || "N/A";
-            });
-            return stats;
+        // 3.获取球队统计数据
+        console.log(`### 📊 球队统计`);
+        console.log(`| 球队 | 得分 | 命中-出手数 | 投篮命中率 | 三分命中率 | 罚球命中率 | 篮板 | 助攻 | 失误 |`);
+        console.log(`|------|------|------------|-------------|-----------|------------|------|------|------|`);
+        jsonData.boxscore.teams.forEach(team => {
+            const teamId = team.team.id;
+            const stats = {
+                team: team.team.displayName,
+                score: scoreMap[teamId] || "N/A", // 关联 score
+                fieldGoalMadeAttempted: team.statistics.find(stat => stat.name === "fieldGoalsMade-fieldGoalsAttempted")?.displayValue || "N/A",
+                fieldGoalPct: team.statistics.find(stat => stat.name === "fieldGoalPct")?.displayValue || "N/A",
+                threePointPct: team.statistics.find(stat => stat.name === "threePointFieldGoalPct")?.displayValue || "N/A",
+                freeThrowPct: team.statistics.find(stat => stat.name === "freeThrowPct")?.displayValue || "N/A",
+                rebounds: team.statistics.find(stat => stat.name === "totalRebounds")?.displayValue || "N/A",
+                assists: team.statistics.find(stat => stat.name === "assists")?.displayValue || "N/A",
+                turnovers: team.statistics.find(stat => stat.name === "turnovers")?.displayValue || "N/A",
+            };
+            console.log(`| ${stats.team} | ${stats.score} | ${stats.fieldGoalMadeAttempted} | ${stats.fieldGoalPct} | ${stats.threePointPct} | ${stats.freeThrowPct} | ${stats.rebounds} | ${stats.assists} | ${stats.turnovers} |`);
         });
 
-        console.log("\n=======📊 球队统计 📊=======");
-        console.table(teamsData);
 
-        // 解析球员数据
+        // 4. 解析球员数据
+        const playersData = [];
         jsonData.boxscore.players.forEach(team => {
             const teamName = team.team.displayName;
-
             team.statistics.forEach(statGroup => {
                 const keys = statGroup.keys;
                 statGroup.athletes.forEach(player => {
@@ -126,52 +138,54 @@ async function  getDetailedBoxScore(gameId) {
                         position: player.athlete.position.displayName,
                         jersey: player.athlete.jersey,
                     };
-
                     // 解析统计数据
                     player.stats.forEach((statValue, index) => {
                         const statName = keys[index];
                         playerData[statName] = statValue;
                     });
-
                     playersData.push(playerData);
                 });
             });
         });
 
-        console.log("\n=======🏀 球员统计 🏀=======");
-        console.table(playersData);
+        console.log("\n### 🏀 球员统计 🏀");
+        console.log(toMarkdownTable(playersData));
 
-        // 解析比赛摘要（Recap）
+        // 5. 解析比赛摘要（Recap）
         const recap = jsonData.article.story || "暂无摘要";
-        console.log("\n=======📜 比赛摘要 📜=======");
+        console.log(`\n### 📜 比赛摘要`);
         console.log(recap);
 
-        // 解析比赛过程（Play-by-Play）
-        console.log("\n=======🎭 比赛过程（完整）🎭=======");
+        // 6. 解析比赛过程（Play-by-Play）
+         console.log(`\n### 🎭 比赛过程（完整）`);
         if (jsonData.plays && jsonData.plays.length > 0) {
             jsonData.plays.forEach(play => {
-                console.log(`[${play.period.displayValue} - ${play.clock.displayValue}] ${play.text}`);
+                console.log(`- **[${play.period.displayValue} - ${play.clock.displayValue}]** ${play.text}`);
             });
         } else {
             console.log("暂无比赛过程数据");
         }
-
-        // 解析详细球队统计（Team Stats）
-        if (jsonData.boxscore.teams[0].statistics && jsonData.boxscore.teams[1].statistics) {
-            console.log("\n=======📊 详细球队数据 📊=======");
-            jsonData.boxscore.teams.forEach(team => {
-                console.log(`\n🏀 ${team.team.displayName}`);
-                team.statistics.forEach(stat => {
-                    console.log(`${stat.name}: ${stat.displayValue}`);
-                });
-            });
-        } else {
-            console.log("\n暂无详细球队统计数据");
-        }
-
     } catch (error) {
         console.error('获取比赛数据时出错:', error.message);
     }
+}
+
+function toMarkdownTable(data) {
+    if (!data.length) return '';
+
+    // 获取表头（Object keys）
+    const headers = Object.keys(data[0]);
+
+    // 生成 Markdown 表头
+    let markdown = `| ${headers.join(' | ')} |\n`;
+    markdown += `|${headers.map(() => '---').join('|')}|\n`;
+
+    // 生成 Markdown 表格内容
+    data.forEach(row => {
+        markdown += `| ${headers.map(key => row[key] || 'N/A').join(' | ')} |\n`;
+    });
+
+    return markdown;
 }
 
 getLakersGameData();
