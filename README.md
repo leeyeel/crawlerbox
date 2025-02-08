@@ -1,14 +1,18 @@
 # NBAStatsCrawler
 
 爬取espn中NBA比赛数据,包括主队，客队，比分情况，球队数据统计，球员数据统计，比赛概览，以及比赛过程。
+
 Scrape NBA game data from ESPN, including home team, away team, score details, team statistics, player statistics, game overview, and game progression.
 
 ## Examples 示例
 
 ### 🏀 比赛信息
 **比赛 ID:** 401705297
+
 **主队:** Los Angeles Lakers  **得分:** 120
+
 **客队:** Golden State Warriors  **得分:** 112
+
 ### 📊 球队统计
 | 球队 | 得分 | 命中-出手数 | 投篮命中率 | 三分命中率 | 罚球命中率 | 篮板 | 助攻 | 失误 |
 |------|------|------------|-------------|-----------|------------|------|------|------|
@@ -59,6 +63,7 @@ LOS ANGELES -- — <a href="http://www.espn.com/nba/player/_/id/1966/lebron-jame
 node espn_scraper.js [team or teamId]    
 ```
 The parameter can be the team name, supporting fuzzy search, or the team ID. For example, all of the following refer to the Lakers:
+
 参数可以为队名，支持模糊搜索，也可以是球队id,比如以下都指向湖人：
 ```
 node yourscript.js "Lakers" 
