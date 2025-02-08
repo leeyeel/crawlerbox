@@ -5,60 +5,92 @@ const fs = require('fs');
 
 const ESPN_URL = 'https://www.espn.com/nba/team/schedule/_/name/lal';
 
-async function getLakersGameData() {
+/**
+ * 获取 NBA 球队当前赛季的比赛日程
+ * @param {string|number} team - 球队名称（支持模糊搜索，如 "Lakers"）或 ESPN 球队 ID（如 13）
+ * @returns {Promise<Object>} - 返回球队比赛日程
+ */
+async function getNBATeamSchedule(team) {
     try {
-        const response = await axios.get(ESPN_URL);
-        const $ = cheerio.load(response.data);
-        const beijingTime = moment().tz('Asia/Shanghai');
-        const espnTime = beijingTime.clone().tz('America/New_York');
-        const today = espnTime.format('ddd, MMM D');
+        let teamId = team;
 
-        let gameInfo = null;
-        let lastCompletedGame = null;
-        let gameLink = null;
+        // 如果输入的是队名，进行模糊匹配获取球队 ID
+        if (isNaN(team)) {
+            const teamsUrl = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams`;
+            const teamsResponse = await axios.get(teamsUrl);
+            const teams = teamsResponse.data.sports[0].leagues[0].teams;
 
-        $('tbody tr').each((index, element) => {
-            let dateText = $(element).find('td:first-child').text().trim().replace(/\s+/g, ' ');
-            if (!dateText) return;
+            // 进行模糊匹配
+            const foundTeam = teams.find(t => 
+                t.team.displayName.toLowerCase().includes(team.toLowerCase()) ||
+                t.team.shortDisplayName.toLowerCase().includes(team.toLowerCase()) ||
+                t.team.abbreviation.toLowerCase() === team.toLowerCase()
+            );
 
-            const gameDate = moment(dateText, 'ddd, MMM D', true);
-            if (!gameDate.isValid() || gameDate.isAfter(espnTime, 'day')) return;
-
-            const resultText = $(element).find('td:nth-child(3)').text().trim();
-            if (!resultText || /\d{1,2}:\d{2} (AM|PM)/.test(resultText) || resultText.toLowerCase().includes('tickets')) return;
-
-            const opponent = $(element).find('td:nth-child(2)').text().trim();
-            const result = resultText;
-            const teamRecord = $(element).find('td:nth-child(4)').text().trim();
-            const topPerformer = $(element).find('td:nth-child(5)').text().trim();
-
-            $(element).find('td a').each((i, link) => {
-                const href = $(link).attr('href');
-                if (href && href.includes('/game/_/gameId/')) {
-                    gameLink = href.startsWith('http') ? href : `https://www.espn.com${href}`;
-                }
-            });
-
-            const gameData = { date: dateText, opponent, result, teamRecord, topPerformer, gameLink };
-
-            if (dateText.includes(today)) {
-                gameInfo = gameData;
-                return false;
+            if (!foundTeam) {
+                throw new Error(`未找到匹配的球队: ${team}`);
             }
-            lastCompletedGame = gameData;
-        });
 
-        if (!gameInfo && lastCompletedGame) gameInfo = lastCompletedGame;
-        if (!gameInfo || !gameInfo.date) return;
+            teamId = foundTeam.team.id;
+            //console.log(`匹配到球队: ${foundTeam.team.displayName} (ID: ${teamId})`);
+        }
 
-        const gameid = gameInfo.gameLink.split('/')[7];
-        if (gameInfo.gameLink) await getDetailedBoxScore(gameid);
+        // 获取球队的比赛日程
+        const scheduleUrl = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/${teamId}/schedule`;
+        const scheduleResponse = await axios.get(scheduleUrl);
+        return scheduleResponse.data;
+        
     } catch (error) {
-        console.error('Error fetching Lakers game data:', error);
+        console.error("获取球队比赛日程时出错:", error.message);
+        return null;
     }
 }
 
+/**
+ * 获取最近一场已经完成的比赛的 gameId
+ * @param {Object} schedule - 球队的比赛日程数据（从 ESPN API 获取）
+ * @param {string} [date] - 查询的起始日期，格式为 "YYYY-MM-DD"（默认为今天）
+ * @returns {Promise<number|null>} - 返回最近完成的 gameId，如果找不到则返回 null
+ */
+async function getLatestCompletedGameId(schedule, date = new Date().toISOString().split('T')[0]) {
+    try {
+        // 解析比赛日程
+        if (!schedule || !schedule.events || schedule.events.length === 0) {
+            throw new Error("比赛日程数据无效或为空");
+        }
 
+        // 获取所有比赛信息
+        const games = schedule.events.map(event => {
+            // 取得比赛日期并格式化为 YYYY-MM-DD
+            const gameDate = event.date.split('T')[0];
+            const isCompleted = event.competitions && event.competitions.some(competition => competition.type.text === "Standard" && competition.boxscoreAvailable);
+
+            return {
+                gameId: event.id,
+                date: gameDate,
+                status: isCompleted ? "completed" : "upcoming"
+            };
+        });
+
+        // 按日期降序排序（最新的比赛在前）
+        games.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // 从指定日期往前查找已完成的比赛
+        let latestGame = null;
+        for (let game of games) {
+            if (new Date(game.date) <= new Date(date) && game.status === "completed") {
+                latestGame = game;
+                break;
+            }
+        }
+
+        // 返回 gameId 或 null
+        return latestGame ? latestGame.gameId : null;
+    } catch (error) {
+        console.error("查找最近已完成比赛时出错:", error.message);
+        return null;
+    }
+}
 
 async function  getDetailedBoxScore(gameId) {
     const ESPN_API_URL = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${gameId}`;
@@ -188,4 +220,23 @@ function toMarkdownTable(data) {
     return markdown;
 }
 
-getLakersGameData();
+async function main() {
+    let teamArg = process.argv[2]; // 获取命令行参数（队名或ID）
+    
+    if (!teamArg) {
+        teamArg = "Lakers";
+    }
+
+    const schedule = await getNBATeamSchedule(teamArg);
+
+    if (schedule) {
+        const gameId = await getLatestCompletedGameId(schedule);
+        if (gameId) {
+            await getDetailedBoxScore(gameId);
+        } else {
+            console.log("未找到最近已完成的比赛");
+        }
+    }
+}
+
+main();
