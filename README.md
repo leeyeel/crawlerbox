@@ -1,8 +1,9 @@
 # NBAStatsCrawler
 
 爬取espn中NBA比赛数据,包括主队，客队，比分情况，球队数据统计，球员数据统计，比赛概览，以及比赛过程。
+Scrape NBA game data from ESPN, including home team, away team, score details, team statistics, player statistics, game overview, and game progression.
 
-## 示例
+## Examples 示例
 
 ### 🏀 比赛信息
 **比赛 ID:** 401705297
@@ -27,12 +28,12 @@
 | Los Angeles Lakers | …… | …… | …… | …… | …… | …… | …… |…… | …… | …… | …… | …… | …… | …… | …… | …… | …… | …… |
 
 
-### 📜 比赛摘要
+### 📜 recap 比赛概述 
 LOS ANGELES -- — <a href="http://www.espn.com/nba/player/_/id/1966/lebron-james">LeBron James</a> had 42 points, 17 rebounds and eight assists, and the <a href="http://www.espn.com/nba/team/_/name/lal/los-angeles-lakers">Los Angeles Lakers</a> blew most of a 26-point lead before hanging on to beat the <a href="http://www.espn.com/nba/team/_/name/gs/golden-state-warriors">Golden State Warriors</a> 120-112 on Thursday night.
 
 ……
 
-### 🎭 比赛过程（完整）
+### 🎭 Play-by-Play  完整比赛 
 - **[1st Quarter - 12:00]** Quinten Post vs. Jaxson Hayes (LeBron James gains possession)
 - **[1st Quarter - 11:41]** LeBron James bad pass (Stephen Curry steals)
 - **[1st Quarter - 11:37]** Jaxson Hayes blocks Stephen Curry 's 4-foot two point shot
@@ -52,19 +53,20 @@ LOS ANGELES -- — <a href="http://www.espn.com/nba/player/_/id/1966/lebron-jame
 
 - ……
 
-## 使用方式
+## Usage 使用方式
 
 ```
 node espn_scraper.js [team or teamId]    
 ```
+The parameter can be the team name, supporting fuzzy search, or the team ID. For example, all of the following refer to the Lakers:
 参数可以为队名，支持模糊搜索，也可以是球队id,比如以下都指向湖人：
 ```
 node yourscript.js "Lakers" 
 
-//或者
+//or
 node yourscript.js "Los Angeles Lakers"    
 
-//或者
+//or
 node yourscript.js 13 //13为湖人队teamId     
 ```
 
