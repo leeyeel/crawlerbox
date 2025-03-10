@@ -135,24 +135,55 @@ async function  getDetailedBoxScore(gameId) {
         console.log(`**主队:** ${homeTeam.team.displayName}  **得分:** ${homescore}`);
         console.log(`**客队:** ${awayTeam.team.displayName}  **得分:** ${awayscore}`);
 
+
         // 3.获取球队统计数据
         console.log(`### 📊 球队统计`);
-        console.log(`| 球队 | 得分 | 命中-出手数 | 投篮命中率 | 三分命中率 | 罚球命中率 | 篮板 | 助攻 | 失误 |`);
-        console.log(`|------|------|------------|-------------|-----------|------------|------|------|------|`);
+        console.log(`|球队|得分|投篮|投篮命中率%|三分球|三分命中率%|罚球` + 
+                    `|罚球命中率%|篮板|进攻篮板|防守篮板|助攻|抢断|盖帽|总失误数` +
+                    `|个人失误|团队失误|失误得分|快攻得分|内线内分|犯规|技术犯规` +
+                    `|恶意犯规|最大领先|`);
+        console.log(`|:--:|:--:|:---|:---------:|:----:|:---------:|:--:` +
+                    `|:---------:|:--:|:------:|:------:|:-------:|:--:|:------:` +
+                    `|:------:|:------:|:------:|:------:|:------:|:--:|:------:` +
+                    `|:------:|:------:|`);
         jsonData.boxscore.teams.forEach(team => {
             const teamId = team.team.id;
             const stats = {
                 team: team.team.displayName,
                 score: scoreMap[teamId] || "N/A", // 关联 score
-                fieldGoalMadeAttempted: team.statistics.find(stat => stat.name === "fieldGoalsMade-fieldGoalsAttempted")?.displayValue || "N/A",
+                FG: team.statistics.find(stat => stat.name === "fieldGoalsMade-fieldGoalsAttempted")?.displayValue || "N/A",
                 fieldGoalPct: team.statistics.find(stat => stat.name === "fieldGoalPct")?.displayValue || "N/A",
-                threePointPct: team.statistics.find(stat => stat.name === "threePointFieldGoalPct")?.displayValue || "N/A",
-                freeThrowPct: team.statistics.find(stat => stat.name === "freeThrowPct")?.displayValue || "N/A",
-                rebounds: team.statistics.find(stat => stat.name === "totalRebounds")?.displayValue || "N/A",
-                assists: team.statistics.find(stat => stat.name === "assists")?.displayValue || "N/A",
-                turnovers: team.statistics.find(stat => stat.name === "turnovers")?.displayValue || "N/A",
+                threePointFieldGoalsMadeAttempted: team.statistics.find(stat => stat.name=== "threePointFieldGoalsMade-threePointFieldGoalsAttempted")?.displayValue || "N/A",
+                threePointFieldGoalPct: team.statistics.find(stat => stat.name=== "threePointFieldGoalPct")?.displayValue || "N/A",
+                freeThrowsMadeAttempted: team.statistics.find(stat => stat.name=== "freeThrowsMade-freeThrowsAttempted")?.displayValue || "N/A",
+                freeThrowPct: team.statistics.find(stat => stat.name=== "freeThrowPct")?.displayValue || "N/A",
+                totalRebounds: team.statistics.find(stat => stat.name=== "totalRebounds")?.displayValue || "N/A",
+                offensiveRebounds: team.statistics.find(stat => stat.name=== "offensiveRebounds")?.displayValue || "N/A",
+                defensiveRebounds: team.statistics.find(stat => stat.name=== "defensiveRebounds")?.displayValue || "N/A",
+                assists: team.statistics.find(stat => stat.name=== "assists")?.displayValue || "N/A",
+                steals: team.statistics.find(stat => stat.name=== "steals")?.displayValue || "N/A",
+                blocks: team.statistics.find(stat => stat.name=== "blocks")?.displayValue || "N/A",
+                totalTurnovers :team.statistics.find(stat => stat.name=== "totalTurnovers")?.displayValue || "N/A",
+                turnovers: team.statistics.find(stat => stat.name=== "turnovers")?.displayValue || "N/A",
+                teamTurnovers: team.statistics.find(stat => stat.name=== "teamTurnovers")?.displayValue || "N/A",
+                turnoverPoints:team.statistics.find(stat => stat.name=== "turnoverPoints")?.displayValue || "N/A",
+                fastBreakPoints :team.statistics.find(stat => stat.name=== "fastBreakPoints")?.displayValue || "N/A",
+                pointsInPaint :team.statistics.find(stat => stat.name=== "pointsInPaint")?.displayValue || "N/A",
+                fouls: team.statistics.find(stat => stat.name=== "fouls")?.displayValue || "N/A",
+                technicalFouls: team.statistics.find(stat => stat.name=== "technicalFouls")?.displayValue || "N/A",
+                flagrantFouls :team.statistics.find(stat => stat.name=== "flagrantFouls")?.displayValue || "N/A",
+                largestLead :team.statistics.find(stat => stat.name=== "largestLead")?.displayValue || "N/A",
             };
-            console.log(`| ${stats.team} | ${stats.score} | ${stats.fieldGoalMadeAttempted} | ${stats.fieldGoalPct} | ${stats.threePointPct} | ${stats.freeThrowPct} | ${stats.rebounds} | ${stats.assists} | ${stats.turnovers} |`);
+            console.log(`| ${stats.team} | ${stats.score} | ${stats.FG}` + 
+            `| ${stats.fieldGoalPct} | ${stats.threePointFieldGoalsMadeAttempted}` +
+            `| ${stats.threePointFieldGoalPct} ` +
+            `| ${stats.freeThrowsMadeAttempted} | ${stats.freeThrowPct}` +
+            `| ${stats.totalRebounds} |${stats.offensiveRebounds}` +
+            `| ${stats.defensiveRebounds} | ${stats.assists} | ${stats.steals}` +
+            `| ${stats.blocks} | ${stats.totalTurnovers} | ${stats.turnovers}` +
+            `| ${stats.teamTurnovers} | ${stats.turnoverPoints} | ${stats.fastBreakPoints}` +
+            `| ${stats.pointsInPaint} | ${stats.fouls} | ${stats.technicalFouls}` +
+            `| ${stats.flagrantFouls} | ${stats.largestLead}|`);
         });
 
 
@@ -183,12 +214,7 @@ async function  getDetailedBoxScore(gameId) {
         console.log("\n### 🏀 球员统计 🏀");
         console.log(toMarkdownTable(playersData));
 
-        // 5. 解析比赛摘要（Recap）
-        const recap = jsonData.article.story || "暂无摘要";
-        console.log(`\n### 📜 比赛摘要`);
-        console.log(recap);
-
-        // 6. 解析比赛过程（Play-by-Play）
+        // 5. 解析比赛过程（Play-by-Play）
          console.log(`\n### 🎭 比赛过程（完整）`);
         if (jsonData.plays && jsonData.plays.length > 0) {
             jsonData.plays.forEach(play => {
@@ -197,6 +223,11 @@ async function  getDetailedBoxScore(gameId) {
         } else {
             console.log("暂无比赛过程数据");
         }
+
+        // 6. 解析比赛摘要（Recap）
+        const recap = jsonData.article.story || "暂无摘要";
+        console.log(`\n### 📜 比赛摘要`);
+        console.log(recap);
     } catch (error) {
         console.error('获取比赛数据时出错:', error.message);
     }
