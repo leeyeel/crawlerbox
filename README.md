@@ -1,19 +1,21 @@
-# NBAStatsCrawler
+# crawlerbox 实用爬虫合集 
+
+## crawler espn
 
 爬取espn中NBA比赛数据,包括主队，客队，比分情况，球队数据统计，球员数据统计，比赛概览，以及比赛过程。
 
 Scrape NBA game data from ESPN, including home team, away team, score details, team statistics, player statistics, game overview, and game progression.
 
-## Examples 示例
+### Examples 示例
 
-### 🏀 比赛信息
+#### 🏀 比赛信息
 **比赛 ID:** 401705297
 
 **主队:** Los Angeles Lakers  **得分:** 120
 
 **客队:** Golden State Warriors  **得分:** 112
 
-### 📊 球队统计
+#### 📊 球队统计
 
 |球队|得分|投篮|投篮命中率%|三分球|三分命中率%|罚球|罚球命中率%|篮板|进攻篮板|防守篮板|助攻|抢断|盖帽|总失误数|个人失误|团队失误|失误得分|快攻得分|内线内分|犯规|技术犯规|恶意犯规|最大领先|
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -21,7 +23,7 @@ Scrape NBA game data from ESPN, including home team, away team, score details, t
 | Golden State Warriors | 115 | 35-84| 41.7 | 12-41| 29.3 | 33-41 | 80.5| 46 |11| 35 | 26 | 12| 4 | 19 | 17| 2 | 26 | 7| 36 | 27 | 2| 0 | 9|
 
 
-### 🏀 球员统计 🏀
+#### 🏀 球员统计 🏀
 | team | name | short_name | position | jersey | MIN | FG | 3PT | FT | OREB | DREB | REB | AST | STL | BLK | TO | PF | +/- | PTS |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Golden State Warriors | Draymond Green | D. Green | Power Forward | 23 | 33 | 5-7 | 2-2 | 1-3 | 0 | 5 | 5 | 4 | 2 | 1 | 0 | 5 | -1 | 13 |
@@ -34,12 +36,12 @@ Scrape NBA game data from ESPN, including home team, away team, score details, t
 | Los Angeles Lakers | …… | …… | …… | …… | …… | …… | …… |…… | …… | …… | …… | …… | …… | …… | …… | …… | …… | …… |
 
 
-### 📜 recap 比赛概述 
+#### 📜 recap 比赛概述 
 LOS ANGELES -- — <a href="http://www.espn.com/nba/player/_/id/1966/lebron-james">LeBron James</a> had 42 points, 17 rebounds and eight assists, and the <a href="http://www.espn.com/nba/team/_/name/lal/los-angeles-lakers">Los Angeles Lakers</a> blew most of a 26-point lead before hanging on to beat the <a href="http://www.espn.com/nba/team/_/name/gs/golden-state-warriors">Golden State Warriors</a> 120-112 on Thursday night.
 
 ……
 
-### 🎭 Play-by-Play  完整比赛 
+#### 🎭 Play-by-Play  完整比赛 
 - **[1st Quarter - 12:00]** Quinten Post vs. Jaxson Hayes (LeBron James gains possession)
 - **[1st Quarter - 11:41]** LeBron James bad pass (Stephen Curry steals)
 - **[1st Quarter - 11:37]** Jaxson Hayes blocks Stephen Curry 's 4-foot two point shot
@@ -59,7 +61,7 @@ LOS ANGELES -- — <a href="http://www.espn.com/nba/player/_/id/1966/lebron-jame
 
 - ……
 
-## Usage 使用方式
+### Usage 使用方式
 
 ```
 node espn_scraper.js [team or teamId]    
@@ -77,5 +79,22 @@ node yourscript.js "Los Angeles Lakers"    
 node yourscript.js 13 //13为湖人队teamId     
 ```
 
+## crawler douban
 
+爬取豆瓣读书，豆瓣电影记录
 
+### 使用方法
+
+```
+python crawler_douban.py [your douban id]
+```
+
+使用`python crawler_douban.py -h`查看帮助信息
+
+### Example 示例
+
+| 嵌入式实时操作系统μC/OS-III | 2018-06-14 | 4 | 无 | 作者官网的那个手册的中文版 |
+| 女士品茶 | 2017-07-26 | 4 | 无 | 基本规避了所有科学史类书的通病，适合懂统计学的小伙伴们看，这样你看里面熟悉的人名跟工作的时候真的爽爆了。另外另外，不要试图通过这本书学习统计 |
+| 哀伤的墙 | 2017-05-27 | 3 | 无 | 无 |
+| 白夜行 | 2017-02-13 | 3 | 无 | 终究还是一个讲述人性的故事。故事很有吸引力 |
+| 三国演义 | 2016-10-12 | 4 | 无 | 无 |
